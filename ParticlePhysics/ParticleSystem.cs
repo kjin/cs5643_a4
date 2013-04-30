@@ -14,6 +14,8 @@ namespace ParticlePhysics
         List<Particle> particles = new List<Particle>();
         List<Force> forces = new List<Force>();
         List<Constraint> constraints = new List<Constraint>();
+        Vector2 mousePosition;
+        bool mouseDown;
 
         /// <summary>
         /// Builds a particle system with gravity and viscous drag forces. This particle system interacts with the mouse.
@@ -22,9 +24,9 @@ namespace ParticlePhysics
         public static ParticleSystem BuildParticleSystem()
         {
             ParticleSystem ps = new ParticleSystem();
-            ps.AddForce(new GravityForce(ps.particles));
-            ps.AddForce(new ViscousDragForce(ps.particles));
-            ps.AddForce(new MouseSpringForce());
+            ps.AddForce(new GravityForce(ps));
+            ps.AddForce(new ViscousDragForce(ps));
+            ps.AddForce(new MouseSpringForce(ps));
             return ps;
         }
 
@@ -56,7 +58,6 @@ namespace ParticlePhysics
             else
             {
                 forces.Add(f);
-                AddSpecialForce(f);
             }
         }
 
@@ -136,6 +137,30 @@ namespace ParticlePhysics
             get
             {
                 return constraints;
+            }
+        }
+
+        public Vector2 MousePosition
+        {
+            get
+            {
+                return mousePosition;
+            }
+            set
+            {
+                mousePosition = value;
+            }
+        }
+
+        public bool MouseDown
+        {
+            get
+            {
+                return mouseDown;
+            }
+            set
+            {
+                mouseDown = value;
             }
         }
     }

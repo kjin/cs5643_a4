@@ -10,20 +10,20 @@ namespace ParticlePhysics
     /// </summary>
     public class ViscousDragForce : Force
     {
-        List<Particle> particles;
+        ParticleSystem PS;
 
         /// <summary>
         /// Constructs a new drag force.
         /// </summary>
-        /// <param name="particles">A list of affected particles.</param>
-        public ViscousDragForce(List<Particle> particles)
+        /// <param name="PS">A particle system containing affected particles.</param>
+        public ViscousDragForce(ParticleSystem PS)
         {
-            this.particles = particles;
+            this.PS = PS;
         }
 
         public override void ApplyForce()
         {
-            foreach (Particle p in particles)
+            foreach (Particle p in PS.Particles)
                 p.Force -= Constants.Physics.DAMPING_MASS * p.Velocity;
         }
     }

@@ -68,7 +68,6 @@
     <Compile Include="GravityForce.cs" />
     <Compile Include="Particle.cs" />
     <Compile Include="ParticleSystem.cs" />
-    <Compile Include="ParticleSystemSpecialForces.cs" />
     <Compile Include="ParticleSystemThreading.cs" />
     <Compile Include="PinConstraint.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -10,22 +10,22 @@ namespace ParticlePhysics
     /// </summary>
     public class GravityForce : Force
     {
-        List<Particle> particles;
+        ParticleSystem PS;
         Vector3 forceVector;
 
         /// <summary>
         /// Constructs a new gravity force.
         /// </summary>
-        /// <param name="particles">The list of particles affected by this gravity force.</param>
-        public GravityForce(List<Particle> particles)
+        /// <param name="PS">The particle system affected by this gravity force.</param>
+        public GravityForce(ParticleSystem PS)
         {
-            this.particles = particles;
+            this.PS = PS;
             forceVector = Constants.Physics.GRAVITY_MAGNITUDE * Constants.Physics.GRAVITY_DIRECTION;
         }
 
         public override void ApplyForce()
         {
-            foreach (Particle p in particles)
+            foreach (Particle p in PS.Particles)
                 p.Force += forceVector;
         }
     }

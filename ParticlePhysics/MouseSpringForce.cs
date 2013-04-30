@@ -11,28 +11,35 @@ namespace ParticlePhysics
     /// </summary>
     public class MouseSpringForce : Force
     {
+        ParticleSystem PS;
         Particle p1;
         Vector3 x2;
         float restLength;
         bool activated;
 
-        public MouseSpringForce() { }
-
-        public Particle Particle
-        {
-            get { return p1; }
-            set
-            {
-                p1 = value;
-                activated = p1 != null;
-                if (activated)
-                    restLength = (x2 - p1.Position).Length();
-            }
-        }
-        public Vector3 MousePosition { get { return x2; } set { x2 = value; } }
+        public MouseSpringForce(ParticleSystem PS) { this.PS = PS; }
 
         public override void ApplyForce()
         {
+            x2 = new Vector3(PS.MousePosition, 0);
+            if (!PS.MouseDown) p1 = null;
+            if (PS.MouseDown && p1 == null)
+            {
+                float min = Single.PositiveInfinity;
+                p1 = null;
+                foreach (Particle p in PS.Particles)
+                {
+                    float dist = (p.Position - x2).LengthSquared();
+                    if (dist < min)
+                    {
+                        p1 = p;
+                        min = dist;
+                        restLength = (x2 - p1.Position).LengthSquared();
+                    }
+                }
+                restLength = (float)Math.Sqrt(restLength);
+            }
+            activated = p1 != null;
             if (activated)
             {
                 Vector3 diff = x2 - p1.Position;

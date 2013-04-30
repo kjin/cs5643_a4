@@ -50,7 +50,8 @@ namespace ParticleForm
 
         public void SetMouseStatus(float x, float y, bool clicked)
         {
-            ps.SetMouseStatus(scale * x, scale * y, clicked);
+            ps.MousePosition = new Vector2(x * scale, y * scale);
+            ps.MouseDown = clicked;
         }
 
         public void Draw(Graphics g)
