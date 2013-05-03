@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
+using OpenTK;
+using OpenTK.Graphics;
 
 namespace ParticlePhysics
 {
@@ -29,7 +30,7 @@ namespace ParticlePhysics
 
         public override int NumDrawables { get { return 1; } }
         public override int DrawableType(int index) { return Constants.Graphics.DRAW_POINT; }
-        public override Color DrawableColor(int index) { return Color.Red; }
+        public override Color4 DrawableColor(int index) { return Color4.Red; }
         public override Vector3 GetPoint(int index) { return p1.Position; }
     }
 }

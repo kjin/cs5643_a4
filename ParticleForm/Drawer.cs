@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Drawing;
-using Microsoft.Xna.Framework;
+using OpenTK;
+using OpenTK.Graphics;
+using Common;
 using ParticlePhysics;
 
 namespace ParticleForm
@@ -31,8 +33,8 @@ namespace ParticleForm
                 int drawType = d.DrawableType(i);
                 if (drawType == Constants.Graphics.DRAW_NOTHING) continue;
                 int numPts = Constants.Graphics.DRAW_PT_LOOKUP_TABLE[drawType];
-                Microsoft.Xna.Framework.Color c = d.DrawableColor(i);
-                pen.Color = Color.FromArgb(c.A, c.R, c.G, c.B);
+                Color4 c = d.DrawableColor(i);
+                pen.Color = Color.FromArgb(c.ToArgb());
                 for (int j = 0; j < numPts; j++)
                     p[j] = scale * d.GetPoint(pi++);
                 switch (drawType)

@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ParticlePhysics;
+using Common;
 using System.Drawing;
-using Microsoft.Xna.Framework;
+using ParticlePhysics;
+using OpenTK;
 
 namespace ParticleForm
 {

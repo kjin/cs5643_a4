@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Xna.Framework;
+using OpenTK;
+using OpenTK.Graphics;
+using Common;
 
 namespace ParticlePhysics
 {
@@ -49,7 +51,7 @@ namespace ParticlePhysics
 
         public virtual int NumDrawables { get { return 1; } }
         public virtual int DrawableType(int index) { return index == 1 ? Constants.Graphics.DRAW_LINE : Constants.Graphics.DRAW_POINT; }
-        public virtual Color DrawableColor(int index) { return index == 1 ? Color.Yellow : Color.White; }
+        public virtual Color4 DrawableColor(int index) { return index == 1 ? Color4.Yellow : Color4.White; }
         public Vector3 GetPoint(int index) { return index == 2 ? position + velocity / 10 : position; }
 
         public Vector3 Position

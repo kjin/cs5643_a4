@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
+using OpenTK;
+using OpenTK.Graphics;
 
 namespace ParticlePhysics
 {
@@ -19,7 +20,7 @@ namespace ParticlePhysics
         {
             this.p1 = p1;
             this.x2 = x2;
-            radius = (x2 - p1.Position).Length();
+            radius = (x2 - p1.Position).Length;
         }
 
         public override void ApplyForce()
@@ -39,7 +40,7 @@ namespace ParticlePhysics
             if (index == 1) return Constants.Graphics.DRAW_CIRCLE;
             return Constants.Graphics.DRAW_POINT;
         }
-        public override Color DrawableColor(int index) { return index == 2 ? Color.Yellow : Color.Blue; }
+        public override Color4 DrawableColor(int index) { return index == 2 ? Color4.Yellow : Color4.Blue; }
         public override Vector3 GetPoint(int index)
         {
             if (index % 3 == 0) return p1.Position;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
+using OpenTK;
 
 namespace ParticlePhysics
 {
@@ -24,13 +24,13 @@ namespace ParticlePhysics
         {
             this.p1 = p1;
             this.p2 = p2;
-            restLength = (p2.Position - p1.Position).Length();
+            restLength = (p2.Position - p1.Position).Length;
         }
 
         public override void ApplyForce()
         {
             Vector3 diff = p2.Position - p1.Position;
-            float currentLength = diff.Length();
+            float currentLength = diff.Length;
             diff.Normalize();
 
             // DAMPING: dv-dot-dpHat

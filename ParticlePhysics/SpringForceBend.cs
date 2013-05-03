@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Microsoft.Xna.Framework;
+using OpenTK;
 
 namespace ParticlePhysics
 {
@@ -32,11 +32,11 @@ namespace ParticlePhysics
         {
             Vector3 a = p1.Position - p0.Position;
             Vector3 b = p2.Position - p1.Position;
-            float length = a.Length() * b.Length();
+            float length = a.Length * b.Length;
             float adb = Vector3.Dot(a, b);
             float lhs = Constants.Physics.STIFFNESS_STRETCH / length;
-            Vector3 f0 = lhs * (adb / a.LengthSquared() * a - b);
-            Vector3 f2 = lhs * (a - adb / b.LengthSquared() * b);
+            Vector3 f0 = lhs * (adb / a.LengthSquared * a - b);
+            Vector3 f2 = lhs * (a - adb / b.LengthSquared * b);
             p0.Force += f0;
             p1.Force -= f0 + f2;
             p2.Force += f2;

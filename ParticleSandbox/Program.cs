@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
+using OpenTK.Graphics;
 
 namespace ParticleSandbox
 {
@@ -14,6 +15,7 @@ namespace ParticleSandbox
 
         static void Main(string[] args)
         {
+            //OpenTK
             Thread ta = new Thread(IncrementAndDisplayA);
             Thread tb = new Thread(IncrementAndDisplayB);
             ta.Start();
