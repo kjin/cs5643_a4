@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTK", "OpenTK\OpenTK.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fluid", "Fluid\Fluid.csproj", "{14E9D2E9-0DE7-49A6-B98E-D46C9DBCF5ED}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTK.GLControl", "GLControl\OpenTK.GLControl.csproj", "{A625BE88-0000-0000-0000-000000000000}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -183,6 +185,30 @@ Global
 		{14E9D2E9-0DE7-49A6-B98E-D46C9DBCF5ED}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{14E9D2E9-0DE7-49A6-B98E-D46C9DBCF5ED}.Release|Win32.ActiveCfg = Release|Any CPU
 		{14E9D2E9-0DE7-49A6-B98E-D46C9DBCF5ED}.Release|x86.ActiveCfg = Release|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Documentation|Any CPU.ActiveCfg = Documentation|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Documentation|Any CPU.Build.0 = Documentation|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Documentation|Mixed Platforms.ActiveCfg = Documentation|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Documentation|Mixed Platforms.Build.0 = Documentation|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Documentation|Win32.ActiveCfg = Documentation|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Documentation|x86.ActiveCfg = Documentation|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Nsis|Any CPU.ActiveCfg = Nsis|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Nsis|Any CPU.Build.0 = Nsis|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Nsis|Mixed Platforms.ActiveCfg = Nsis|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Nsis|Mixed Platforms.Build.0 = Nsis|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Nsis|Win32.ActiveCfg = Nsis|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Nsis|x86.ActiveCfg = Nsis|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Release|Win32.ActiveCfg = Release|Any CPU
+		{A625BE88-0000-0000-0000-000000000000}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
