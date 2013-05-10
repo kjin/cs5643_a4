@@ -32,6 +32,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -40,10 +41,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CircleConstraint.cs" />
-    <Compile Include="Class1.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="Constraint.cs" />
     <Compile Include="Force.cs" />
+    <Compile Include="GLDrawable.cs" />
     <Compile Include="GravityForce.cs" />
     <Compile Include="MouseSpringForce.cs" />
     <Compile Include="Particle.cs" />

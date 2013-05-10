@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 using Common;
 
 namespace ParticlePhysics
@@ -10,7 +11,7 @@ namespace ParticlePhysics
     /// <summary>
     /// Represents a basic particle object.
     /// </summary>
-    public class Particle : Drawable
+    public class Particle : Drawable, GLDrawable
     {
         //mechanics
         Vector3 initialPosition;
@@ -53,6 +54,14 @@ namespace ParticlePhysics
         public virtual int DrawableType(int index) { return index == 1 ? Constants.Graphics.DRAW_LINE : Constants.Graphics.DRAW_POINT; }
         public virtual Color4 DrawableColor(int index) { return index == 1 ? Color4.Yellow : Color4.White; }
         public Vector3 GetPoint(int index) { return index == 2 ? position + velocity / 10 : position; }
+
+        public virtual void Draw()
+        {
+            GL.Color4(Color4.White);
+            GL.Begin(BeginMode.Points);
+            GL.Vertex3(position);
+            GL.End();
+        }
 
         public Vector3 Position
         {

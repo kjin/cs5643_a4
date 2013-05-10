@@ -10,7 +10,7 @@ namespace ParticlePhysics
     /// <summary>
     /// Represents a force that can be applied to any number of particles.
     /// </summary>
-    public abstract class Force : Drawable
+    public abstract class Force : Drawable, GLDrawable
     {
         /// <summary>
         /// Applies the force on affected particles.
@@ -21,5 +21,7 @@ namespace ParticlePhysics
         public virtual int DrawableType(int index) { return Constants.Graphics.DRAW_NOTHING; }
         public virtual Color4 DrawableColor(int index) { return Color4.White; }
         public virtual Vector3 GetPoint(int index) { return Vector3.Zero; }
+
+        public virtual void Draw() { }
     }
 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 
 namespace ParticlePhysics
 {
@@ -45,5 +47,14 @@ namespace ParticlePhysics
         public override int NumDrawables { get { return 1; } }
         public override int DrawableType(int index) { return Constants.Graphics.DRAW_LINE; }
         public override Vector3 GetPoint(int index) { return index == 1 ? p2.Position : p1.Position; }
+
+        public override void Draw()
+        {
+            GL.Color4(Color4.White);
+            GL.Begin(BeginMode.Lines);
+            GL.Vertex3(p1.Position);
+            GL.Vertex3(p2.Position);
+            GL.End();
+        }
     }
 }

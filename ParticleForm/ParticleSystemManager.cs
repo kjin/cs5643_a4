@@ -15,7 +15,7 @@ namespace ParticleForm
     public class ParticleSystemManager
     {
         ParticleSystem ps;
-        Drawer drawer;
+        GLDrawer drawer;
         float scale = 0.1f;
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace ParticleForm
             ps.AddConstraint(new PinConstraint(p2));
             Vector3 buffer = 5f * Vector3.One;
             //ps.CreateRectangleBounds(buffer, new Vector3(width * scale, height * scale, 0f) - buffer);
-            drawer = new Drawer(1f / scale);
+            drawer = new GLDrawer(1f / scale);
         }
 
         public void Run()
@@ -58,12 +58,13 @@ namespace ParticleForm
         public void Draw(Graphics g)
         {
             ps.Mutex.WaitOne();
-            foreach (Drawable p in ps.Particles)
-                drawer.Draw(g, p);
-            foreach (Drawable f in ps.Forces)
-                drawer.Draw(g, f);
-            foreach (Drawable c in ps.Constraints)
-                drawer.Draw(g, c);
+            drawer.Reset();
+            foreach (GLDrawable p in ps.Particles)
+                drawer.Draw(p);
+            foreach (GLDrawable f in ps.Forces)
+                drawer.Draw(f);
+            foreach (GLDrawable c in ps.Constraints)
+                drawer.Draw(c);
             ps.Mutex.ReleaseMutex();
         }
     }

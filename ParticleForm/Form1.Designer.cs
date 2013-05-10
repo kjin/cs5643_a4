@@ -30,12 +30,28 @@
         {
             this.components = new System.ComponentModel.Container();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.particleSimulation = new DeflickerPanel();
+            this.glControl1 = new OpenTK.GLControl();
+            this.particleSimulation = new ParticleForm.DeflickerPanel();
             this.SuspendLayout();
             // 
             // timer1
             // 
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // glControl1
+            // 
+            this.glControl1.BackColor = System.Drawing.Color.Black;
+            this.glControl1.Location = new System.Drawing.Point(400, 0);
+            this.glControl1.Name = "glControl1";
+            this.glControl1.Size = new System.Drawing.Size(600, 600);
+            this.glControl1.TabIndex = 1;
+            this.glControl1.VSync = false;
+            this.glControl1.Load += new System.EventHandler(this.glControl1_Load);
+            this.glControl1.Paint += new System.Windows.Forms.PaintEventHandler(this.glControl1_Paint);
+            this.glControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDown);
+            this.glControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseMove);
+            this.glControl1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseUp);
+            this.glControl1.Resize += new System.EventHandler(this.glControl1_Resize);
             // 
             // particleSimulation
             // 
@@ -44,6 +60,7 @@
             this.particleSimulation.Name = "particleSimulation";
             this.particleSimulation.Size = new System.Drawing.Size(600, 600);
             this.particleSimulation.TabIndex = 0;
+            this.particleSimulation.Visible = false;
             this.particleSimulation.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             this.particleSimulation.MouseDown += new System.Windows.Forms.MouseEventHandler(this.panel1_MouseDown);
             this.particleSimulation.MouseMove += new System.Windows.Forms.MouseEventHandler(this.panel1_MouseMove);
@@ -55,6 +72,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Window;
             this.ClientSize = new System.Drawing.Size(1000, 599);
+            this.Controls.Add(this.glControl1);
             this.Controls.Add(this.particleSimulation);
             this.Name = "Form1";
             this.Text = "Form1";
@@ -68,6 +86,7 @@
 
         private System.Windows.Forms.Timer timer1;
         private DeflickerPanel particleSimulation;
+        private OpenTK.GLControl glControl1;
     }
 }
 

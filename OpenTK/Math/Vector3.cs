@@ -1264,6 +1264,18 @@ namespace OpenTK
         }
 
         /// <summary>
+        /// Multiplies two instances.
+        /// author = kjin.
+        /// </summary>
+        /// <param name="left">The first instance.</param>
+        /// <param name="right">The second instance.</param>
+        /// <returns>The result of the calculation.</returns>
+        public static Vector3 operator *(Vector3 left, Vector3 right)
+        {
+            return new Vector3(left.X * right.X, left.Y * right.Y, left.Z * right.Z);
+        }
+
+        /// <summary>
         /// Divides an instance by a scalar.
         /// </summary>
         /// <param name="vec">The instance.</param>

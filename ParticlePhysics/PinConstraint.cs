@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 
 namespace ParticlePhysics
 {
@@ -32,5 +33,13 @@ namespace ParticlePhysics
         public override int DrawableType(int index) { return Constants.Graphics.DRAW_POINT; }
         public override Color4 DrawableColor(int index) { return Color4.Red; }
         public override Vector3 GetPoint(int index) { return p1.Position; }
+
+        public override void Draw()
+        {
+            GL.Color4(Color4.Yellow);
+            GL.Begin(BeginMode.Points);
+            GL.Vertex3(p1.Position);
+            GL.End();
+        }
     }
 }
