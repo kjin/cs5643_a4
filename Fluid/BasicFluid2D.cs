@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using Common;
 using OpenTK;
 using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 
 namespace Fluid
 {
-    public class BasicFluid2D
+    public class BasicFluid2D : GLDrawable
     {
 
         //(2 dimensions) with velocity and pressure
@@ -141,5 +143,16 @@ namespace Fluid
             //matrix solving
         }
 
+        public void Draw()
+        {
+            GL.Begin(BeginMode.Lines);
+            for (int i = 0; i < max_x; i++)
+                for (int j = 0; j < max_y; j++)
+                {
+                    GL.Vertex2(i, j);
+                    GL.Vertex2(i + u_x[i,j], j + u_y[i,j]);
+                }
+            GL.End();
+        }
     }
 }

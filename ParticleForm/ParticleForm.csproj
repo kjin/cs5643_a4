@@ -108,6 +108,10 @@
       <Project>{0771b280-923c-429f-9b16-d1acf87d7e50}</Project>
       <Name>Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Fluid\Fluid.csproj">
+      <Project>{14e9d2e9-0de7-49a6-b98e-d46c9dbcf5ed}</Project>
+      <Name>Fluid</Name>
+    </ProjectReference>
     <ProjectReference Include="..\GLControl\OpenTK.GLControl.csproj">
       <Project>{a625be88-0000-0000-0000-000000000000}</Project>
       <Name>OpenTK.GLControl</Name>

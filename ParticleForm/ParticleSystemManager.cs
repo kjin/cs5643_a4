@@ -6,6 +6,7 @@ using Common;
 using System.Drawing;
 using ParticlePhysics;
 using OpenTK;
+using Fluid;
 
 namespace ParticleForm
 {
@@ -17,6 +18,7 @@ namespace ParticleForm
         ParticleSystem ps;
         GLDrawer drawer;
         float scale = 0.1f;
+        BasicFluid2D fluid;
 
         /// <summary>
         /// Constructs a new particle system manager.
@@ -37,11 +39,14 @@ namespace ParticleForm
             Vector3 buffer = 5f * Vector3.One;
             //ps.CreateRectangleBounds(buffer, new Vector3(width * scale, height * scale, 0f) - buffer);
             drawer = new GLDrawer(1f / scale);
+
+            fluid = new BasicFluid2D(60, 60);
         }
 
         public void Run()
         {
             ps.Run();
+            fluid.TimeStep(0.0001);
         }
 
         public void Stop()
@@ -66,6 +71,8 @@ namespace ParticleForm
             foreach (GLDrawable c in ps.Constraints)
                 drawer.Draw(c);
             ps.Mutex.ReleaseMutex();
+
+            drawer.Draw(fluid);
         }
     }
 }
