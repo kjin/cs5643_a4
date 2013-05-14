@@ -115,11 +115,17 @@ namespace Fluid
             {
                 for (int j = 0; j < max_y; j++)
                 {
-                    double vel_x = (u_x[i,j] + u_x[i+1,j])/2;
+                    double vel_x = (u_x[i, j] + u_x[i + 1, j]) / 2;
                     double vel_y = (u_y[i,j] + u_y[i,j + 1]) / 2;
-                    
-
-                    //not finished
+                    double old_x = i - dt * vel_x;
+                    double old_y = j - dt * vel_y;
+                    int old_i = (int)old_x;
+                    int old_j = (int)old_y;
+                    double offset_i = old_x - old_i;
+                    double offset_j = old_y - old_j;
+                    // this skips for now but really old_i and old_j should be clamped
+                    if (old_i < 0 || old_j < 0 || old_i + 1 >= max_x || old_j + 1 >= max_y) continue;
+                    cells[i, j].SetInterpolatedValues(cells[old_i, old_j], cells[old_i + 1, old_j], cells[old_i, old_j + 1], cells[old_i + 1, old_j + 1], offset_i, offset_j);
                 }
             }
         }
@@ -194,8 +200,11 @@ namespace Fluid
                 for (int j = 0; j < max_y; j++)
                 {
                     GL.Color3((float)i / max_x, (float)j / max_y, 0);
-                    GL.Vertex2(i, j);
-                    GL.Vertex2(new Vector2d(i, j) + GetVelocity(i, j));
+                    Vector2d velocity = GetVelocity(i, j);
+                    GL.Vertex2(i - 0.5, j);
+                    GL.Vertex2(i - 0.5 + velocity.X, j);
+                    GL.Vertex2(i, j - 0.5);
+                    GL.Vertex2(i, j - 0.5 + velocity.Y);
                 }
             GL.End();
         }
