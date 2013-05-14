@@ -14,9 +14,15 @@ namespace Fluid
     public class BasicFluid2D : GLDrawable
     {
 
-        //(2 dimensions) with velocity and pressure
-        double[,] u_x, u_y, p;
+        //(2 dimensions) with velocity
+        double[,] u_x, u_y;
+        GridCell[,] cells;
         int max_x, max_y;
+        double timestep = FluidConstants.DEFAULT_TIMESTEP;
+        public Vector2 GlobalForce;
+
+        //threading stuff
+        volatile bool _running = false;
 
         public BasicFluid2D(int max_x, int max_y)
         {
@@ -25,10 +31,18 @@ namespace Fluid
 
             u_x = new double[max_x+1,max_y];
             u_y = new double[max_x,max_y+1];
-            p = new double[max_x,max_y];
+            cells = new GridCell[max_x, max_y];
+            for (int i = 0; i < max_x; i++)
+                for (int j = 0; j < max_y; j++)
+                {
+                    cells[i, j] = new GridCell();
+                    cells[i, j].Adiag = (short)(2 + (i == 0 || i + 1 == max_x ? 1 : 0) + (j == 0 || j + 1 == max_y ? 1 : 0));
+                    cells[i, j].Aplusi = (short)(i + 1 < max_x ? -1 : 0);
+                    cells[i, j].Aplusj = (short)(j + 1 < max_y ? -1 : 0);
+                }
         }
 
-        public void TimeStep(double timestep)
+        public void TimeStep()
         {
             for (int i = 0; i < max_x; i++)
             {
@@ -37,8 +51,16 @@ namespace Fluid
                     Vector2d vel = AdvectVelocity(timestep, i, j);
                     u_x[i, j] = vel.X;
                     u_y[i, j] = vel.Y;
+
                 }
             }
+            Advect(timestep);
+            for (int i = 0; i < max_x; i++)
+                for (int j = 0; j < max_y; j++)
+                {
+                    u_x[i, j] += DX * GlobalForce.X;
+                    u_y[i, j] += DX * GlobalForce.Y;
+                }
         }
 
         //accepts x in [0,1] and y in [0,1]
@@ -71,23 +93,23 @@ namespace Fluid
             double offset_i = old_x - old_i;
             double offset_j = old_y - old_j;
 
-            if (old_i < 0 || old_i >= max_x || old_j < 0 || old_j >= max_y)
+            if (old_i < 0 || old_i >= max_x - 1 || old_j < 0 || old_j >= max_y - 1)
                 return new Vector2d(0, 0);
 
            double ret_x = (offset_i) * (offset_j) * u_x[old_i + 1,old_j + 1]
-                 + (offset_i) * (1 - offset_j) * u_x[old_i + 1,old_j]
-                 + (1 - offset_i) * (offset_j) * u_x[old_i,old_j]
+                 + (offset_i) * (1 - offset_j) * u_x[old_i + 1,old_j]   
+                 + (1 - offset_i) * (offset_j) * u_x[old_i,old_j + 1]
                  + (1 - offset_i) * (1 - offset_j) * u_x[old_i,old_j];
 
             double ret_y = (offset_i) * (offset_j) * u_y[old_i + 1,old_j + 1]
                  + (offset_i) * (1 - offset_j) * u_y[old_i + 1,old_j]
-                 + (1 - offset_i) * (offset_j) * u_y[old_i,old_j]
+                 + (1 - offset_i) * (offset_j) * u_y[old_i,old_j + 1]
                  + (1 - offset_i) * (1 - offset_j) * u_y[old_i,old_j];
 
             return new Vector2d(ret_x, ret_y);
         }
 
-        private void Advect(ref double[][] q)
+        private void Advect(double dt)
         {
             for (int i = 0; i < max_x; i++)
             {
@@ -95,6 +117,7 @@ namespace Fluid
                 {
                     double vel_x = (u_x[i,j] + u_x[i+1,j])/2;
                     double vel_y = (u_y[i,j] + u_y[i,j + 1]) / 2;
+                    
 
                     //not finished
                 }
@@ -104,7 +127,7 @@ namespace Fluid
 
         private Vector2d GetVelocity(double x, double y)
         {
-            if (x <= 0.5 || x >= max_x || y <= 0.5 || y >= max_y)
+            if (x <= 0.5 || x >= max_x - 1 || y <= 0.5 || y >= max_y - 1)
                 return new Vector2d(0,0);
 
             //get x first:
@@ -140,7 +163,28 @@ namespace Fluid
 
         private void project()
         {
-            //matrix solving
+            for (int i = 0; i < max_x; i++)
+            {
+                for (int j = 0; j < max_y; j++)
+                {
+                    //approximate divergence
+                    cells[i,j].VelocityDivergence = (u_x[i, j] + u_x[i + 1, j]) / 2 + (u_y[i, j] + u_y[i, j + 1]) / 2;
+                    double e = cells[i, j].Adiag - (cells[i - 1, j].Aplusi * cells[i - 1, j].PreconditionedValue);
+                    //unfinished
+                }
+            }
+        }
+
+        public void Run()
+        {
+            _running = true;
+            while (_running)
+                TimeStep();
+        }
+
+        public void Stop()
+        {
+            _running = false;
         }
 
         public void Draw()
@@ -149,10 +193,23 @@ namespace Fluid
             for (int i = 0; i < max_x; i++)
                 for (int j = 0; j < max_y; j++)
                 {
+                    GL.Color3((float)i / max_x, (float)j / max_y, 0);
                     GL.Vertex2(i, j);
-                    GL.Vertex2(i + u_x[i,j], j + u_y[i,j]);
+                    GL.Vertex2(new Vector2d(i, j) + GetVelocity(i, j));
                 }
             GL.End();
+        }
+
+        public double DX
+        {
+            get
+            {
+                return timestep;
+            }
+            set
+            {
+                timestep = value;
+            }
         }
     }
 }
