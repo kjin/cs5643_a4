@@ -23,11 +23,9 @@ namespace Fluid
         double timestep = FluidConstants.DEFAULT_TIMESTEP;
         public Vector2 GlobalForce;
 
-        DenseMatrix V;
-        DenseMatrix VInv;
-        DenseMatrix D;
-
         SparseMatrix A;
+        MathNet.Numerics.LinearAlgebra.Double.Solvers.Preconditioners.IPreConditioner solver;
+        Vector p, d;
 
         //threading stuff
         volatile bool _running = false;
@@ -38,8 +36,8 @@ namespace Fluid
             this.max_x = max_x;
             this.max_y = max_y;
 
-            u_x = new double[max_x+1,max_y];
-            u_y = new double[max_x,max_y+1];
+            u_x = new double[max_x + 1, max_y];
+            u_y = new double[max_x, max_y + 1];
             cells = new GridCell[max_x, max_y];
             A = new SparseMatrix(max_x * max_y);
             for (int i = 0; i < max_x; i++)
@@ -49,7 +47,7 @@ namespace Fluid
                     if (i > 0)
                         A[(i - 1) * max_x + j, i * max_x + j] = A[i * max_x + j, (i - 1) * max_x + j] = -1;
                     if (j > 0)
-                        A[i * max_x + j - 1, i * max_x + j] = A[i * max_x + j , i * max_x + j - 1] = -1;
+                        A[i * max_x + j - 1, i * max_x + j] = A[i * max_x + j, i * max_x + j - 1] = -1;
                     if (i < max_x - 1)
                         A[(i + 1) * max_x + j, i * max_x + j] = A[i * max_x + j, (i + 1) * max_x + j] = -1;
                     if (j < max_y - 1)
@@ -61,11 +59,12 @@ namespace Fluid
                     if (new Vector2(i - max_x / 2, j - max_y / 2).LengthSquared < max_x * max_y / 16)
                         cells[i, j].ImplicitSurface = 5;
                 }
-            //using (TextWriter tw = new StreamWriter("output.txt")) tw.WriteLine(A.ToMatrixString(900, 900));
-
-            V = MatrixAlgebra.ToDenseMatrix(new ShallowSubsectionMatrix(new DSTMatrix(2 * (max_x + 1)), 1, 1, max_x, max_x));
-            VInv = MatrixAlgebra.Scale(V, 2.0 / (max_x + 1.0));
-            D = MatrixAlgebra.ToDenseMatrix(new DiagonalDelegateMatrix(delegate(int ij) { return -4.0 * Util.Square(Math.Sin((ij + 1) * Math.PI / 2.0 / (max_x + 1.0))); }, max_x));
+            using (TextWriter tw = new StreamWriter("output.txt")) tw.WriteLine(A.ToMatrixString(900, 900));
+            solver = new
+                MathNet.Numerics.LinearAlgebra.Double.Solvers.Preconditioners.IncompleteLU();
+            solver.Initialize(A);
+            p = new DenseVector(max_x * max_y);
+            d = new DenseVector(max_x * max_y);
         }
 
         /// <summary>
@@ -116,23 +115,24 @@ namespace Fluid
 
         public void SetVelocity(double x, double y, Vector2d new_vel)
         {
-            int i = (int) (max_x * x);
-            int j = (int) (max_y * y);
+            int i = (int)(max_x * x);
+            int j = (int)(max_y * y);
 
             if (i < 0 || i >= max_x || j < 0 || j >= max_y)
                 return;
 
-            u_x[i,j] = new_vel.X;
-            u_y[i,j] = new_vel.Y;
+            u_x[i, j] = new_vel.X;
+            u_y[i, j] = new_vel.Y;
         }
 
 
-        private Vector2d AdvectVelocity(double dt, int i, int j) {
+        private Vector2d AdvectVelocity(double dt, int i, int j)
+        {
             if (i < 0 || i >= max_x || j < 0 || j >= max_y)
                 return new Vector2d(0, 0);
-            
-            double old_x = i - dt * u_x[i,j];
-            double old_y = j - dt * u_y[i,j];
+
+            double old_x = i - dt * u_x[i, j];
+            double old_y = j - dt * u_y[i, j];
             int old_i = (int)old_x;
             int old_j = (int)old_y;
             double offset_i = old_x - old_i;
@@ -141,15 +141,15 @@ namespace Fluid
             if (old_i < 0 || old_i >= max_x - 1 || old_j < 0 || old_j >= max_y - 1)
                 return new Vector2d(0, 0);
 
-           double ret_x = (offset_i) * (offset_j) * u_x[old_i + 1,old_j + 1]
-                 + (offset_i) * (1 - offset_j) * u_x[old_i + 1,old_j]   
-                 + (1 - offset_i) * (offset_j) * u_x[old_i,old_j + 1]
-                 + (1 - offset_i) * (1 - offset_j) * u_x[old_i,old_j];
+            double ret_x = (offset_i) * (offset_j) * u_x[old_i + 1, old_j + 1]
+                  + (offset_i) * (1 - offset_j) * u_x[old_i + 1, old_j]
+                  + (1 - offset_i) * (offset_j) * u_x[old_i, old_j + 1]
+                  + (1 - offset_i) * (1 - offset_j) * u_x[old_i, old_j];
 
-            double ret_y = (offset_i) * (offset_j) * u_y[old_i + 1,old_j + 1]
-                 + (offset_i) * (1 - offset_j) * u_y[old_i + 1,old_j]
-                 + (1 - offset_i) * (offset_j) * u_y[old_i,old_j + 1]
-                 + (1 - offset_i) * (1 - offset_j) * u_y[old_i,old_j];
+            double ret_y = (offset_i) * (offset_j) * u_y[old_i + 1, old_j + 1]
+                 + (offset_i) * (1 - offset_j) * u_y[old_i + 1, old_j]
+                 + (1 - offset_i) * (offset_j) * u_y[old_i, old_j + 1]
+                 + (1 - offset_i) * (1 - offset_j) * u_y[old_i, old_j];
 
             return new Vector2d(ret_x, ret_y);
         }
@@ -179,6 +179,10 @@ namespace Fluid
                     double w_x = vel_x + FluidConstants.BLUE_CORE_EMISSION_RATE * normal.X;
                     double w_y = vel_y + FluidConstants.BLUE_CORE_EMISSION_RATE * normal.Y;
                     cells[i, j].ImplicitSurface -= timestep * (w_x * (cells[i - 1, j].ImplicitSurface - cells[i, j].ImplicitSurface) + w_y * (cells[i, j - 1].ImplicitSurface - cells[i, j].ImplicitSurface));
+                    if (cells[i, j].ImplicitSurface > 0)
+                        cells[i, j].Density = 100;
+                    else
+                        cells[i, j].Density = 10;
                 }
             }
         }
@@ -214,7 +218,7 @@ namespace Fluid
                 for (int j = 1; j < max_y - 1; j++)
                 {
                     //(dv/dx - du/dy)k = curl
-                    cells[i,j].Vorticity = (u_x[i, j + 1] - u_x[i, j - 1]) / 2 - (u_y[i + 1, j] - u_y[i - 1, j]) / 2;
+                    cells[i, j].Vorticity = (u_x[i, j + 1] - u_x[i, j - 1]) / 2 - (u_y[i + 1, j] - u_y[i - 1, j]) / 2;
                 }
             }
 
@@ -227,7 +231,7 @@ namespace Fluid
                                            (Math.Abs(cells[i, j + 1].Vorticity) - Math.Abs(cells[i, j - 1].Vorticity)) / 2,
                                            0);
                     N.Normalize();
-                    Vector3d f_vorticity = Vector3d.Cross(N,curl);
+                    Vector3d f_vorticity = Vector3d.Cross(N, curl);
                     Vector3d.Mult(f_vorticity, FluidConstants.VORTICITY);
 
                     u_x[i, j] += (dt * f_vorticity.X) / 2;
@@ -236,7 +240,7 @@ namespace Fluid
                     u_y[i, j + 1] += (dt * f_vorticity.Y) / 2;
 
 
-        }
+                }
             }
         }
 
@@ -278,22 +282,22 @@ namespace Fluid
 
         private void Project(double timestep)
         {
-            DenseDelegateMatrix B = new DenseDelegateMatrix(delegate(int i, int j) { return (u_x[i + 1, j] - u_x[i, j]) + (u_y[i, j + 1] - u_y[i, j]); }, max_x);
-            DenseMatrix BHat = MatrixAlgebra.Multiply(VInv, MatrixAlgebra.Multiply(B, V));
-            DenseMatrix UHat = new DenseMatrix(B.Rows, B.Columns);
-            for (int i = 0; i < UHat.Rows; i++)
-                for (int j = 0; j < UHat.Columns; j++)
-                    UHat[i, j] = BHat[i, j] / (D[i, i] + D[j, j]);
-            DenseMatrix UInt = MatrixAlgebra.Multiply(V, MatrixAlgebra.Multiply(UHat, VInv));
-            GridCellMatrix U = new GridCellMatrix(cells, 3);
+            d = new DenseVector(max_x * max_y);
+            for (int i = 0; i < max_x; i++)
+                for (int j = 0; j < max_y; j++)
+                    d[i * max_x + j] = u_x[i + 1, j] - u_x[i, j] + u_y[i, j + 1] - u_y[i, j];
+            solver.Approximate(d, p);
+            for (int i = 0; i < max_x; i++)
+                for (int j = 0; j < max_y; j++)
+                    cells[i, j].Pressure = p[i * max_x + j];
             error = 0;
-            for (int i = 0; i < UInt.Rows - 1; i++)
-                for (int j = 0; j < UInt.Columns - 1; j++)
+            for (int i = 0; i < max_x - 1; i++)
+                for (int j = 0; j < max_y - 1; j++)
                 {
-                    U[i, j] = UInt[i, j];
-                    u_x[i + 1, j] -= timestep / cells[i,j].Density * (UInt[i + 1, j] - UInt[i, j]);
-                    u_y[i, j + 1] -= timestep / cells[i,j].Density * (UInt[i, j + 1] - UInt[i, j]);
-                    error += B[i, j];
+                    if (cells[i, j].Density == 0) continue;
+                    u_x[i + 1, j] -= timestep / cells[i, j].Density * cells[i + 1, j].Pressure - cells[i, j].Pressure;
+                    u_y[i, j + 1] -= timestep / cells[i, j].Density * cells[i, j + 1].Pressure - cells[i, j].Pressure;
+                    error += Util.Square(u_x[i + 1, j] - u_x[i, j] + u_y[i, j + 1] - u_y[i, j]);
                 }
         }
 
@@ -301,7 +305,7 @@ namespace Fluid
         {
             if (x < 0 || y < 0 || x >= max_x || y >= max_x) return;
             cells[(int)x, (int)y].Temperature += 5000;
-            cells[(int)x, (int)y].Density += 10000;
+            //cells[(int)x, (int)y].Density += 10000;
             SpotlightCell = cells[(int)x, (int)y];
         }
 

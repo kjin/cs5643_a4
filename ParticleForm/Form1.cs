@@ -88,18 +88,19 @@ namespace ParticleForm
 
         private void glControl1_MouseDown(object sender, MouseEventArgs e)
         {
-            psm.SetMouseStatus(e.X, e.Y, true);
+            psm.SetMouseStatus(e.X, e.Y, true, e.Button == MouseButtons.Right);
         }
 
         private void glControl1_MouseMove(object sender, MouseEventArgs e)
         {
-            psm.SetMouseStatus(e.X, e.Y, e.Button != System.Windows.Forms.MouseButtons.None);
+            psm.SetMouseStatus(e.X, e.Y, e.Button != System.Windows.Forms.MouseButtons.None, e.Button == MouseButtons.Right);
         }
 
         private void glControl1_MouseUp(object sender, MouseEventArgs e)
         {
-            psm.SetMouseStatus(e.X, e.Y, false);
-            textBox1.Text = BasicFluid2D.SpotlightCell.ToString();
+            psm.SetMouseStatus(e.X, e.Y, false, e.Button == MouseButtons.Right);
+            if (BasicFluid2D.SpotlightCell != null)
+                textBox1.Text = BasicFluid2D.SpotlightCell.ToString();
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)

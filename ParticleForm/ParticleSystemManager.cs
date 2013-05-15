@@ -46,7 +46,7 @@ namespace ParticleForm
             fluid.Stop();
         }
 
-        public void SetMouseStatus(float x, float y, bool clicked)
+        public void SetMouseStatus(float x, float y, bool clicked, bool mod)
         {
             Vector2 xNew = new Vector2(x, y);
             Vector2 dx = xNew - xOld2;
@@ -55,7 +55,8 @@ namespace ParticleForm
             if (clicked)
             {
                 Console.WriteLine(fluid.error);
-                fluid.OnClick(x * scale, y * scale);
+                if (mod)
+                    fluid.OnClick(x * scale, y * scale);
             }
             xOld = xNew;
             xOld2 = xOld;

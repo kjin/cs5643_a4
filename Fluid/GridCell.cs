@@ -36,7 +36,7 @@ namespace Fluid
             double br = xa * (1 - ya);
             double tl = (1 - xa) * ya;
             double tr = xa * ya;
-            for (int i = 1; i < 3; i++)
+            for (int i = 1; i < 2; i++)
                 data[i] = bl * bottomLeft.data[i] + br * bottomRight.data[i] + tl * topLeft.data[i] + tr * topRight.data[i];
         }
 
