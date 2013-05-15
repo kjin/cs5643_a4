@@ -45,13 +45,24 @@ namespace Fluid
         public void Draw()
         {
             maxPressure = Math.Max(maxPressure, Math.Abs(Pressure));
-            GL.Color3(-Pressure / maxPressure, Pressure / maxPressure, 0.0);
+            double r = Temperature / 2000;
+            double g = Temperature > 2000 ? (Temperature - 2000) / 2000 : 0;
+            double b = 0;
+            double a = 1;
+            GL.Color4(r,g,b,a);
             GL.Begin(BeginMode.Quads);
             GL.Vertex2(0, 0);
             GL.Vertex2(1, 0);
             GL.Vertex2(1, 1);
             GL.Vertex2(0, 1);
             GL.End();
+        }
+
+        public override string ToString()
+        {
+            StringBuilder s = new StringBuilder();
+            s.AppendFormat("Temp: {0}\r\nDensity: {1}\r\nPressure: {2}\r\nVorticity: {3}\r\n", Temperature, Density, Pressure, Vorticity);
+            return s.ToString();
         }
     }
 }

@@ -18,7 +18,7 @@ namespace ParticleForm
     {
         Vector2 dimensions;
         GLDrawer drawer;
-        float scale = 0.1f;
+        float scale = 0.05f;
         BasicFluid2D fluid;
         Vector2 xOld, xOld2;
 
@@ -50,10 +50,13 @@ namespace ParticleForm
         {
             Vector2 xNew = new Vector2(x, y);
             Vector2 dx = xNew - xOld2;
-            Console.Write("Mouse: ({0}, {1})\n", x, y);
-            fluid.SetVelocity(x / dimensions.X, y / dimensions.Y, 1 * new Vector2d(dx.X, dx.Y));
+            //Console.Write("Mouse: ({0}, {1})\n", x, y);
+            //fluid.SetVelocity(x / dimensions.X, y / dimensions.Y, 100 * new Vector2d(dx.X, dx.Y));
             if (clicked)
+            {
                 Console.WriteLine(fluid.error);
+                fluid.OnClick(x * scale, y * scale);
+            }
             xOld = xNew;
             xOld2 = xOld;
         }

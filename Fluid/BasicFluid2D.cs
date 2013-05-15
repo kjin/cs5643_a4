@@ -9,6 +9,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using MathNet.Numerics.LinearAlgebra.Double;
+using MathNet.Numerics.LinearAlgebra.Double.Solvers.Preconditioners;
 
 namespace Fluid
 {
@@ -21,9 +22,9 @@ namespace Fluid
         double timestep = FluidConstants.DEFAULT_TIMESTEP;
         public Vector2 GlobalForce;
 
-        DenseMatrix V;
-        DenseMatrix VInv;
-        DenseMatrix D;
+        SparseMatrix A;
+        IncompleteLU solver;
+        Vector p, d;
 
         //threading stuff
         volatile bool _running = false;
@@ -37,20 +38,30 @@ namespace Fluid
             u_x = new double[max_x+1,max_y];
             u_y = new double[max_x,max_y+1];
             cells = new GridCell[max_x, max_y];
+            A = new SparseMatrix(max_x * max_y);
             for (int i = 0; i < max_x; i++)
                 for (int j = 0; j < max_y; j++)
                 {
+                    A[i * max_x + j, i * max_x + j] = 2 + (i == 0 || i + 1 == max_x ? 1 : 0) + (j == 0 || j + 1 == max_y ? 1 : 0);
+                    if (i > 0)
+                        A[(i - 1) * max_x + j, i * max_x + j] = A[i * max_x + j, (i - 1) * max_x + j] = -1;
+                    if (j > 0)
+                        A[i * max_x + j - 1, i * max_x + j] = A[i * max_x + j , i * max_x + j - 1] = -1;
+                    if (i < max_x - 1)
+                        A[(i + 1) * max_x + j, i * max_x + j] = A[i * max_x + j, (i + 1) * max_x + j] = -1;
+                    if (j < max_y - 1)
+                        A[i * max_x + j + 1, i * max_x + j] = A[i * max_x + j, i * max_x + j + 1] = -1;
                     cells[i, j] = new GridCell();
-                    cells[i, j].Adiag = (short)(2 + (i == 0 || i + 1 == max_x ? 1 : 0) + (j == 0 || j + 1 == max_y ? 1 : 0));
-                    cells[i, j].Aplusi = (short)(i + 1 < max_x ? -1 : 0);
-                    cells[i, j].Aplusj = (short)(j + 1 < max_y ? -1 : 0);
+                    //cells[i, j].Adiag = (short)(2 + (i == 0 || i + 1 == max_x ? 1 : 0) + (j == 0 || j + 1 == max_y ? 1 : 0));
+                    //cells[i, j].Aplusi = (short)(i + 1 < max_x ? -1 : 0);
+                    //cells[i, j].Aplusj = (short)(j + 1 < max_y ? -1 : 0);
                     if (new Vector2(i - max_x / 2, j - max_y / 2).LengthSquared < max_x * max_y / 16)
                         cells[i, j].IsFluid = true;
                 }
-
-            V = MatrixAlgebra.ToDenseMatrix(new ShallowSubsectionMatrix(new DSTMatrix(2 * (max_x + 1)), 1, 1, max_x, max_x));
-            VInv = MatrixAlgebra.Scale(V, 2.0 / (max_x + 1.0));
-            D = MatrixAlgebra.ToDenseMatrix(new DiagonalDelegateMatrix(delegate(int ij) { return -4.0 * Util.Square(Math.Sin((ij + 1) * Math.PI / 2.0 / (max_x + 1.0))); }, max_x));
+            solver = new IncompleteLU();
+            solver.Initialize(A);
+            p = new DenseVector(max_x * max_y);
+            d = new DenseVector(max_x * max_y);
         }
 
         public void TimeStep()
@@ -63,14 +74,15 @@ namespace Fluid
                     Vector2d vel = AdvectVelocity(timestep, i, j);
                     u_x[i, j] = vel.X;
                     u_y[i, j] = vel.Y;
-
                 }
             }
+            error = 0;
             for (int i = 0; i < max_x; i++)
                 for (int j = 0; j < max_y; j++)
                 {
                     u_x[i, j] += timestep * GlobalForce.X;
                     u_y[i, j] += timestep * GlobalForce.Y;
+            error = Math.Max(error, Math.Max(u_x[i,j],u_y[i,j]));
                 }
 
             ApplyBuoyancy(timestep);
@@ -141,7 +153,7 @@ namespace Fluid
                     double offset_j = old_y - old_j;
                     // this skips for now but really old_i and old_j should be clamped
                     if (old_i < 0 || old_j < 0 || old_i + 1 >= max_x || old_j + 1 >= max_y) continue;
-                    cells[i, j].SetInterpolatedValues(cells[old_i, old_j], cells[old_i + 1, old_j], cells[old_i, old_j + 1], cells[old_i + 1, old_j + 1], offset_i, offset_j);
+                    cells[i, j].SetInterpolatedValues(cells[old_i, old_j], cells[old_i, old_j + 1], cells[old_i + 1, old_j], cells[old_i + 1, old_j + 1], offset_i, offset_j);
                 }
             }
         }
@@ -153,7 +165,7 @@ namespace Fluid
                 for (int j = 1; j < max_y; j++)
                 {
                     double f_buoy = ((cells[i, j].Temperature + cells[i, j - 1].Temperature) / 2) * (FluidConstants.BUOYANCY);
-                    u_y[i, j] += f_buoy * dt;
+                    u_y[i, j] -= f_buoy * dt;
                 }
             }
 
@@ -195,7 +207,7 @@ namespace Fluid
         private Vector2d GetVelocity(double x, double y)
         {
             if (x <= 0.5 || x >= max_x - 1 || y <= 0.5 || y >= max_y - 1)
-                return new Vector2d(0,0);
+                return new Vector2d(0, 0);
 
             //get x first:
             x += 0.5;
@@ -206,10 +218,10 @@ namespace Fluid
             int i = (int)x;
             int j = (int)y;
 
-            velocity_x = (offset_x) * (offset_y) * u_x[i,j]
-                + (1 - offset_x) * (offset_y) * u_x[i + 1,j]
-                + (offset_x) * (1 - offset_y) * u_x[i,j + 1]
-                + (1 - offset_x) * (1 - offset_y) * u_x[i + 1,j + 1];
+            velocity_x = (offset_x) * (offset_y) * u_x[i, j]
+                + (1 - offset_x) * (offset_y) * u_x[i + 1, j]
+                + (offset_x) * (1 - offset_y) * u_x[i, j + 1]
+                + (1 - offset_x) * (1 - offset_y) * u_x[i + 1, j + 1];
             x -= 0.5;
 
             //now y:
@@ -220,37 +232,42 @@ namespace Fluid
             i = (int)x;
             j = (int)y;
 
-            double velocity_y = (offset_x) * (offset_y) * u_y[i,j]
-                + (1 - offset_x) * (offset_y) * u_y[i + 1,j]
-                + (offset_x) * (1 - offset_y) * u_y[i,j + 1]
-                + (1 - offset_x) * (1 - offset_y) * u_y[i + 1,j + 1];
+            double velocity_y = (offset_x) * (offset_y) * u_y[i, j]
+                + (1 - offset_x) * (offset_y) * u_y[i + 1, j]
+                + (offset_x) * (1 - offset_y) * u_y[i, j + 1]
+                + (1 - offset_x) * (1 - offset_y) * u_y[i + 1, j + 1];
 
             return new Vector2d(velocity_x, velocity_y);
         }
 
         private void Project(double timestep)
         {
-            DenseDelegateMatrix B = new DenseDelegateMatrix(delegate(int i, int j) { return (u_x[i + 1, j] - u_x[i, j]) + (u_y[i, j + 1] - u_y[i, j]); }, max_x);
-            DenseMatrix BHat = MatrixAlgebra.Multiply(VInv, MatrixAlgebra.Multiply(B, V));
-            DenseMatrix UHat = new DenseMatrix(B.Rows, B.Columns);
-            for (int i = 0; i < UHat.Rows; i++)
-                for (int j = 0; j < UHat.Columns; j++)
-                    UHat[i, j] = BHat[i, j] / (D[i, i] + D[j, j]);
-            DenseMatrix UInt = MatrixAlgebra.Multiply(V, MatrixAlgebra.Multiply(UHat, VInv));
-            GridCellMatrix U = new GridCellMatrix(cells, 3);
-            for (int i = 0; i < UInt.Rows - 1; i++)
-                for (int j = 0; j < UInt.Columns - 1; j++)
+            d = new DenseVector(max_x * max_y);
+            for (int i = 0; i < max_x; i++)
+                for (int j = 0; j < max_y; j++)
+                    d[i * max_x + j] = u_x[i + 1, j] - u_x[i, j] + u_y[i, j + 1] - u_y[i, j];
+            solver.Approximate(d, p);
+            for (int i = 0; i < max_x; i++)
+                for (int j = 0; j < max_y; j++)
+                    cells[i, j].Pressure = p[i * max_x + j];
+            for (int i = 0; i < max_x - 1; i++)
+                for (int j = 0; j < max_y - 1; j++)
                 {
-                    U[i, j] = UInt[i, j];
-                    u_x[i + 1, j] -= timestep / FluidConstants.WATER_PRESSURE * (UInt[i + 1, j] - UInt[i, j]);
-                    u_y[i, j + 1] -= timestep / FluidConstants.WATER_PRESSURE * (UInt[i, j + 1] - UInt[i, j]);
+                    if (cells[i, j].Density == 0) continue;
+                    u_x[i + 1, j] -= timestep / cells[i, j].Density * cells[i + 1, j].Pressure - cells[i, j].Pressure;
+                    u_y[i, j + 1] -= timestep / cells[i, j].Density * cells[i, j + 1].Pressure - cells[i, j].Pressure;
                 }
-            error = 0;
-            for (int i = 1; i < UInt.Rows - 1; i++)
-                for (int j = 1; j < UInt.Columns - 1; j++)
-                    error += B[i, j];
         }
 
+        public void OnClick(double x, double y)
+        {
+            if (x < 0 || y < 0 || x >= max_x || y >= max_x) return;
+            cells[(int)x, (int)y].Temperature += 500;
+            cells[(int)x, (int)y].Density += 500;
+            SpotlightCell = cells[(int)x, (int)y];
+        }
+
+        public static GridCell SpotlightCell;
         public double error;
 
         public void Run()
@@ -284,12 +301,12 @@ namespace Fluid
             for (int i = 0; i < max_x; i++)
                 for (int j = 0; j < max_y; j++)
                 {
-                    GL.Color3(0,0,1);
-                    Vector2d velocity = GetVelocity(i, j);
-                    /*GL.Vertex2(i - 0.5, j);
-                    GL.Vertex2(i - 0.5 + velocity.X, j);
+                    GL.Color3(0f,0f,Math.Log10(u_x[i,j])/3);
+                    GL.Vertex2(i - 0.5, j);
+                    GL.Vertex2(i - 0.5 + u_x[i,j], j);
+                    GL.Color3(0f, 0f, Math.Log10(u_y[i, j]) / 3);
                     GL.Vertex2(i, j - 0.5);
-                    GL.Vertex2(i, j - 0.5 + velocity.Y);*/
+                    GL.Vertex2(i, j - 0.5 + u_y[i,j]);
                 }
             GL.End();
         }

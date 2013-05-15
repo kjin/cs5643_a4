@@ -10,6 +10,7 @@ using System.Threading;
 using ParticlePhysics;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using Fluid;
 
 namespace ParticleForm
 {
@@ -98,6 +99,12 @@ namespace ParticleForm
         private void glControl1_MouseUp(object sender, MouseEventArgs e)
         {
             psm.SetMouseStatus(e.X, e.Y, false);
+            textBox1.Text = BasicFluid2D.SpotlightCell.ToString();
+        }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

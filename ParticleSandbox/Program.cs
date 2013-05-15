@@ -17,7 +17,9 @@ namespace ParticleSandbox
 
         static void Main(string[] args)
         {
-            //MathNet.Numerics.LinearAlgebra.Double.
+            MathNet.Numerics.LinearAlgebra.Double.Solvers.Preconditioners.IncompleteLU precon = new MathNet.Numerics.LinearAlgebra.Double.Solvers.Preconditioners.IncompleteLU();
+            //precon
+            
         }
 
         static void IncrementAndDisplayA() { while (_running) Console.WriteLine("a = " + a++); Console.WriteLine("A has stopped running"); }
