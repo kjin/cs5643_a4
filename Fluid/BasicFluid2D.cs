@@ -159,6 +159,39 @@ namespace Fluid
 
         }
 
+        private void ApplyVorticity(double dt)
+        {
+            for (int i = 1; i < max_x - 1; i++)
+            {
+                for (int j = 1; j < max_y - 1; j++)
+                {
+                    //(dv/dx - du/dy)k = curl
+                    cells[i,j].Vorticity = (u_x[i, j + 1] - u_x[i, j - 1]) / 2 - (u_y[i + 1, j] - u_y[i - 1, j]) / 2;
+                }
+            }
+
+            for (int i = 2; i < max_x - 2; i++)
+            {
+                for (int j = 2; j < max_y - 2; j++)
+                {
+                    Vector3d curl = new Vector3d(0, 0, cells[i, j].Vorticity);
+                    Vector3d N = new Vector3d((Math.Abs(cells[i + 1, j].Vorticity) - Math.Abs(cells[i - 1, j].Vorticity)) / 2,
+                                           (Math.Abs(cells[i, j + 1].Vorticity) - Math.Abs(cells[i, j - 1].Vorticity)) / 2,
+                                           0);
+                    N.Normalize();
+                    Vector3d f_vorticity = Vector3d.Cross(N,curl);
+                    Vector3d.Mult(f_vorticity, FluidConstants.VORTICITY);
+
+                    u_x[i, j] += (dt * f_vorticity.X) / 2;
+                    u_x[i + 1, j] += (dt * f_vorticity.X) / 2;
+                    u_y[i, j] += (dt * f_vorticity.Y) / 2;
+                    u_y[i, j + 1] += (dt * f_vorticity.Y) / 2;
+
+
+        }
+            }
+        }
+
         private Vector2d GetVelocity(double x, double y)
         {
             if (x <= 0.5 || x >= max_x - 1 || y <= 0.5 || y >= max_y - 1)
