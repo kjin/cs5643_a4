@@ -186,7 +186,7 @@ namespace Fluid
                     u_y[i, j + 1] += (dt * f_vorticity.Y) / 2;
 
 
-                }
+        }
             }
         }
 
