@@ -211,11 +211,11 @@ namespace Fluid
         {
             get
             {
-                throw new NotImplementedException();
+                return cells[i, j][dataIndex];
             }
             set
             {
-                throw new NotImplementedException();
+                cells[i, j][dataIndex] = value;
             }
         }
     }

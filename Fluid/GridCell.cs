@@ -27,6 +27,8 @@ namespace Fluid
         public short Aplusi;
         public short Aplusj;
 
+        public double this[int i] { get { return data[i]; } set { data[i] = value; } }
+
         public void SetInterpolatedValues(GridCell bottomLeft, GridCell topLeft, GridCell bottomRight, GridCell topRight, double xa, double ya)
         {
             double bl = (1 - xa) * (1 - ya);
