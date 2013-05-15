@@ -178,7 +178,7 @@ namespace Fluid
                                            0);
                     N.Normalize();
                     Vector3d f_vorticity = Vector3d.Cross(N,curl);
-                    f_vorticity.Mult(FluidConstants.VORTICITY);
+                    Vector3d.Mult(f_vorticity, FluidConstants.VORTICITY);
 
                     u_x[i, j] += (dt * f_vorticity.X) / 2;
                     u_x[i + 1, j] += (dt * f_vorticity.X) / 2;

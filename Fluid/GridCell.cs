@@ -42,7 +42,7 @@ namespace Fluid
 
         public void Draw()
         {
-            GL.Color3(0.0, Pressure, IsFluid ? 1.0 : 0.0);
+            GL.Color3(0.0, Pressure / 1000, 0.0);
             GL.Begin(BeginMode.Quads);
             GL.Vertex2(0, 0);
             GL.Vertex2(1, 0);
