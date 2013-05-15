@@ -53,7 +53,7 @@ namespace ParticleForm
             Console.Write("Mouse: ({0}, {1})\n", x, y);
             fluid.SetVelocity(x / dimensions.X, y / dimensions.Y, 1 * new Vector2d(dx.X, dx.Y));
             if (clicked)
-                fluid.SetPressure((int)(x * scale), (int)(y * scale), 1);
+                Console.WriteLine(fluid.error);
             xOld = xNew;
             xOld2 = xOld;
         }

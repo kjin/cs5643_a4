@@ -8,5 +8,7 @@ namespace Fluid
     public static class Util
     {
         public static double Square(double a) { return a * a; }
+
+        public static void NOP() { }
     }
 }

@@ -23,6 +23,7 @@ namespace Fluid
 
         DenseMatrix V;
         DenseMatrix VInv;
+        DenseMatrix D;
 
         //threading stuff
         volatile bool _running = false;
@@ -47,8 +48,9 @@ namespace Fluid
                         cells[i, j].IsFluid = true;
                 }
 
-            V = MatrixAlgebra.ToDenseMatrix(new ShallowSubsectionMatrix(new DSTMatrix(2 * max_x + 1), 1, 1, max_x, max_x));
-            VInv = MatrixAlgebra.Invert(V);
+            V = MatrixAlgebra.ToDenseMatrix(new ShallowSubsectionMatrix(new DSTMatrix(2 * (max_x + 1)), 1, 1, max_x, max_x));
+            VInv = MatrixAlgebra.Scale(V, 2.0 / (max_x + 1.0));
+            D = MatrixAlgebra.ToDenseMatrix(new DiagonalDelegateMatrix(delegate(int ij) { return -4.0 * Util.Square(Math.Sin((ij + 1) * Math.PI / 2.0 / (max_x + 1.0))); }, max_x));
         }
 
         public void TimeStep()
@@ -195,19 +197,28 @@ namespace Fluid
 
         private void Project(double timestep)
         {
-            DenseDelegateMatrix B = new DenseDelegateMatrix(delegate(int i, int j) { return (u_x[i + 1, j] + u_x[i, j]) / 2 + (u_y[i, j + 1] + u_y[i, j] / 2); }, max_x);
-            DiagonalDelegateMatrix D = new DiagonalDelegateMatrix(delegate(int ij) { return -4 * Util.Square(Math.Sin(ij * Math.PI / 2 / (max_x + 1))); }, max_x);
+            DenseDelegateMatrix B = new DenseDelegateMatrix(delegate(int i, int j) { return (u_x[i + 1, j] - u_x[i, j]) + (u_y[i, j + 1] - u_y[i, j]); }, max_x);
             DenseMatrix BHat = MatrixAlgebra.Multiply(VInv, MatrixAlgebra.Multiply(B, V));
             DenseMatrix UHat = new DenseMatrix(B.Rows, B.Columns);
             for (int i = 0; i < UHat.Rows; i++)
                 for (int j = 0; j < UHat.Columns; j++)
-                    UHat[i, j] = FluidConstants.WATER_PRESSURE / timestep * BHat[i, j] / (D[i, i] + D[j, j]);
+                    UHat[i, j] = BHat[i, j] / (D[i, i] + D[j, j]);
             DenseMatrix UInt = MatrixAlgebra.Multiply(V, MatrixAlgebra.Multiply(UHat, VInv));
             GridCellMatrix U = new GridCellMatrix(cells, 3);
-            for (int i = 0; i < U.Rows; i++)
-                for (int j = 0; j < U.Columns; j++)
+            for (int i = 0; i < UInt.Rows - 1; i++)
+                for (int j = 0; j < UInt.Columns - 1; j++)
+                {
                     U[i, j] = UInt[i, j];
+                    u_x[i + 1, j] -= timestep / FluidConstants.WATER_PRESSURE * (UInt[i + 1, j] - UInt[i, j]);
+                    u_y[i, j + 1] -= timestep / FluidConstants.WATER_PRESSURE * (UInt[i, j + 1] - UInt[i, j]);
+                }
+            error = 0;
+            for (int i = 1; i < UInt.Rows - 1; i++)
+                for (int j = 1; j < UInt.Columns - 1; j++)
+                    error += B[i, j];
         }
+
+        public double error;
 
         public void Run()
         {
@@ -240,20 +251,14 @@ namespace Fluid
             for (int i = 0; i < max_x; i++)
                 for (int j = 0; j < max_y; j++)
                 {
-                    GL.Color3((float)i / max_x, (float)j / max_y, 0);
+                    GL.Color3(0,0,1);
                     Vector2d velocity = GetVelocity(i, j);
-                    GL.Vertex2(i - 0.5, j);
+                    /*GL.Vertex2(i - 0.5, j);
                     GL.Vertex2(i - 0.5 + velocity.X, j);
                     GL.Vertex2(i, j - 0.5);
-                    GL.Vertex2(i, j - 0.5 + velocity.Y);
+                    GL.Vertex2(i, j - 0.5 + velocity.Y);*/
                 }
             GL.End();
-        }
-
-        //temp
-        public void SetPressure(int i, int j, double amount)
-        {
-            cells[i, j].Pressure = amount;
         }
 
         public double DX

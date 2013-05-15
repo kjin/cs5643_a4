@@ -39,9 +39,12 @@ namespace Fluid
                 data[i] = bl * bottomLeft.data[i] + br * bottomRight.data[i] + tl * topLeft.data[i] + tr * topRight.data[i];
         }
 
+        static double maxPressure;
+
         public void Draw()
         {
-            GL.Color3(0.0, Pressure / 1000, 0.0);
+            maxPressure = Math.Max(maxPressure, Math.Abs(Pressure));
+            GL.Color3(-Pressure / maxPressure, Pressure / maxPressure, 0.0);
             GL.Begin(BeginMode.Quads);
             GL.Vertex2(0, 0);
             GL.Vertex2(1, 0);

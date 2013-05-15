@@ -300,6 +300,15 @@ namespace Fluid
             return C;
         }
 
+        public static DenseMatrix Scale(Matrix A, double factor)
+        {
+            DenseMatrix B = new DenseMatrix(A.Rows, A.Columns);
+            for (int i = 0; i < A.Rows; i++)
+                for (int j = 0; j < A.Columns; j++)
+                    B[i, j] = factor * A[i, j];
+            return B;
+        }
+
         public static DenseMatrix ToDenseMatrix(Matrix A)
         {
             DenseMatrix B = new DenseMatrix(A.Rows, A.Columns);
@@ -319,6 +328,20 @@ namespace Fluid
                 for (int j = 0; j < A.Columns; j++)
                     B[i, j] = C[i, j];
             return B;
+        }
+
+        public static string ToString(Matrix A)
+        {
+            string s = "[";
+            for (int i = 0; i < A.Rows; i++)
+            {
+                for (int j = 0; j < A.Columns; j++)
+                    s += " " + A[i, j];
+                if (i < A.Rows - 1)
+                    s += "\n";
+            }
+            s += "]";
+            return s;
         }
     }
 }
