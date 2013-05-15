@@ -11,9 +11,10 @@ namespace Fluid
         public static double DEFAULT_TIMESTEP = 0.001;
 
         public static double WATER_PRESSURE = 1000;
-        public static double GRAVITY_MAGNITUDE = 9.81;
+        public static double GRAVITY_MAGNITUDE = 100;
 
         public static double BUOYANCY = 500;
         public static double VORTICITY = 0.1;
+        public static double BLUE_CORE_EMISSION_RATE = 1.0;
     }
 }

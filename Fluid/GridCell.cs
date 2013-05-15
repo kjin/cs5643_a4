@@ -8,7 +8,7 @@ namespace Fluid
 {
     public class GridCell
     {
-        double[] data = new double[7];
+        double[] data = new double[7] { -1, 0, 0, 0, 0, 0, 0 };
 
         //positive in fuel-filled regions, zero at reaction zone, negative elsewhere
         public double ImplicitSurface { get { return data[0]; } set { data[0] = value; } }
@@ -36,7 +36,7 @@ namespace Fluid
             double br = xa * (1 - ya);
             double tl = (1 - xa) * ya;
             double tr = xa * ya;
-            for (int i = 0; i < 4; i++)
+            for (int i = 1; i < 3; i++)
                 data[i] = bl * bottomLeft.data[i] + br * bottomRight.data[i] + tl * topLeft.data[i] + tr * topRight.data[i];
         }
 
@@ -47,7 +47,7 @@ namespace Fluid
             maxPressure = Math.Max(maxPressure, Math.Abs(Pressure));
             double r = Temperature / 2000;
             double g = Temperature > 2000 ? (Temperature - 2000) / 2000 : 0;
-            double b = 0;
+            double b = ImplicitSurface / 5;
             double a = 1;
             GL.Color4(r,g,b,a);
             GL.Begin(BeginMode.Quads);

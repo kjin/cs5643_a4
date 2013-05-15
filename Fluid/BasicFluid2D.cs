@@ -56,7 +56,7 @@ namespace Fluid
                     //cells[i, j].Aplusi = (short)(i + 1 < max_x ? -1 : 0);
                     //cells[i, j].Aplusj = (short)(j + 1 < max_y ? -1 : 0);
                     if (new Vector2(i - max_x / 2, j - max_y / 2).LengthSquared < max_x * max_y / 16)
-                        cells[i, j].IsFluid = true;
+                        cells[i, j].ImplicitSurface = 5;
                 }
             solver = new IncompleteLU();
             solver.Initialize(A);
@@ -64,9 +64,21 @@ namespace Fluid
             d = new DenseVector(max_x * max_y);
         }
 
+        /// <summary>
+        /// Steps:
+        /// 1. Advect velocity.
+        /// 2. Project for pressure.
+        /// 3. Solve for final velocity.
+        /// 4. Solve implicit surface.
+        /// 5. Advect density.
+        /// 6. Advect temperature.
+        /// 7. Apply forces.
+        /// </summary>
         public void TimeStep()
         {
-            
+            //cells[15, 15].Density = 1000;
+            //cells[15, 15].Temperature = 2000;
+
             for (int i = 0; i < max_x; i++)
             {
                 for (int j = 0; j < max_y; j++)
@@ -76,19 +88,20 @@ namespace Fluid
                     u_y[i, j] = vel.Y;
                 }
             }
-            error = 0;
+            Project(timestep);
+            Advect(timestep);
+            //error = 0;
             for (int i = 0; i < max_x; i++)
                 for (int j = 0; j < max_y; j++)
                 {
                     u_x[i, j] += timestep * GlobalForce.X;
                     u_y[i, j] += timestep * GlobalForce.Y;
-            error = Math.Max(error, Math.Max(u_x[i,j],u_y[i,j]));
+                    //error = Math.Max(error, Math.Max(u_x[i,j],u_y[i,j]));
                 }
 
             ApplyBuoyancy(timestep);
-         
-            Advect(timestep);
-            Project(timestep);
+            //ApplyVorticity(timestep);
+            ApplyGravity(timestep);
         }
 
         //accepts x in [0,1] and y in [0,1]
@@ -144,7 +157,7 @@ namespace Fluid
                 for (int j = 0; j < max_y; j++)
                 {
                     double vel_x = (u_x[i, j] + u_x[i + 1, j]) / 2;
-                    double vel_y = (u_y[i,j] + u_y[i,j + 1]) / 2;
+                    double vel_y = (u_y[i, j] + u_y[i, j + 1]) / 2;
                     double old_x = i - dt * vel_x;
                     double old_y = j - dt * vel_y;
                     int old_i = (int)old_x;
@@ -153,7 +166,15 @@ namespace Fluid
                     double offset_j = old_y - old_j;
                     // this skips for now but really old_i and old_j should be clamped
                     if (old_i < 0 || old_j < 0 || old_i + 1 >= max_x || old_j + 1 >= max_y) continue;
+                    //Advects temperature, density
                     cells[i, j].SetInterpolatedValues(cells[old_i, old_j], cells[old_i, old_j + 1], cells[old_i + 1, old_j], cells[old_i + 1, old_j + 1], offset_i, offset_j);
+                    // deal with implicit surfaces
+                    if (i <= 0 || j <= 0 || i + 2 >= max_x || j + 2 >= max_y) continue;
+                    Vector2d normal = new Vector2d(cells[i + 1, j].ImplicitSurface - cells[i - 1, j].ImplicitSurface, cells[i, j + 1].ImplicitSurface - cells[i, j - 1].ImplicitSurface);
+                    normal.Normalize();
+                    double w_x = vel_x + FluidConstants.BLUE_CORE_EMISSION_RATE * normal.X;
+                    double w_y = vel_y + FluidConstants.BLUE_CORE_EMISSION_RATE * normal.Y;
+                    cells[i, j].ImplicitSurface -= timestep * (w_x * (cells[i - 1, j].ImplicitSurface - cells[i, j].ImplicitSurface) + w_y * (cells[i, j - 1].ImplicitSurface - cells[i, j].ImplicitSurface));
                 }
             }
         }
@@ -169,6 +190,17 @@ namespace Fluid
                 }
             }
 
+        }
+
+        private void ApplyGravity(double dt)
+        {
+            for (int i = 0; i < max_x; i++)
+            {
+                for (int j = 0; j < max_y; j++)
+                {
+                    u_y[i, j] += FluidConstants.GRAVITY_MAGNITUDE;
+                }
+            }
         }
 
         private void ApplyVorticity(double dt)
@@ -250,20 +282,22 @@ namespace Fluid
             for (int i = 0; i < max_x; i++)
                 for (int j = 0; j < max_y; j++)
                     cells[i, j].Pressure = p[i * max_x + j];
+            error = 0;
             for (int i = 0; i < max_x - 1; i++)
                 for (int j = 0; j < max_y - 1; j++)
                 {
                     if (cells[i, j].Density == 0) continue;
                     u_x[i + 1, j] -= timestep / cells[i, j].Density * cells[i + 1, j].Pressure - cells[i, j].Pressure;
                     u_y[i, j + 1] -= timestep / cells[i, j].Density * cells[i, j + 1].Pressure - cells[i, j].Pressure;
+                    error += Util.Square(u_x[i + 1, j] - u_x[i, j] + u_y[i, j + 1] - u_y[i, j]);
                 }
         }
 
         public void OnClick(double x, double y)
         {
             if (x < 0 || y < 0 || x >= max_x || y >= max_x) return;
-            cells[(int)x, (int)y].Temperature += 500;
-            cells[(int)x, (int)y].Density += 500;
+            cells[(int)x, (int)y].Temperature += 5000;
+            cells[(int)x, (int)y].Density += 10000;
             SpotlightCell = cells[(int)x, (int)y];
         }
 
@@ -301,12 +335,12 @@ namespace Fluid
             for (int i = 0; i < max_x; i++)
                 for (int j = 0; j < max_y; j++)
                 {
-                    GL.Color3(0f,0f,Math.Log10(u_x[i,j])/3);
+                    /*GL.Color3(0f,0f,Math.Log10(u_x[i,j])/3);
                     GL.Vertex2(i - 0.5, j);
                     GL.Vertex2(i - 0.5 + u_x[i,j], j);
                     GL.Color3(0f, 0f, Math.Log10(u_y[i, j]) / 3);
                     GL.Vertex2(i, j - 0.5);
-                    GL.Vertex2(i, j - 0.5 + u_y[i,j]);
+                    GL.Vertex2(i, j - 0.5 + u_y[i,j]);*/
                 }
             GL.End();
         }

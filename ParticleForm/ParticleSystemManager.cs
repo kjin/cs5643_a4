@@ -37,7 +37,7 @@ namespace ParticleForm
         public void Run()
         {
             fluid.DX = 0.001;
-            fluid.GlobalForce = new Vector2(0, 0);
+            fluid.GlobalForce = new Vector2(0, 5);
             new Thread(fluid.Run).Start();
         }
 
