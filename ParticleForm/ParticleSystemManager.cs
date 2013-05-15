@@ -37,7 +37,7 @@ namespace ParticleForm
         public void Run()
         {
             fluid.DX = 0.001;
-            fluid.GlobalForce = new Vector2(0, 0.1f);
+            fluid.GlobalForce = new Vector2(0, 0);
             new Thread(fluid.Run).Start();
         }
 
@@ -51,7 +51,9 @@ namespace ParticleForm
             Vector2 xNew = new Vector2(x, y);
             Vector2 dx = xNew - xOld2;
             Console.Write("Mouse: ({0}, {1})\n", x, y);
-            fluid.SetVelocity(x / dimensions.X, y / dimensions.Y, (clicked ? 10 : 1) * new Vector2d(dx.X, dx.Y));
+            fluid.SetVelocity(x / dimensions.X, y / dimensions.Y, 1 * new Vector2d(dx.X, dx.Y));
+            if (clicked)
+                fluid.SetPressure((int)(x * scale), (int)(y * scale), 1);
             xOld = xNew;
             xOld2 = xOld;
         }

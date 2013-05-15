@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using OpenTK.Graphics;
+using MathNet.Numerics;
+using MathNet.Numerics.LinearAlgebra;
 
 namespace ParticleSandbox
 {
@@ -15,15 +17,7 @@ namespace ParticleSandbox
 
         static void Main(string[] args)
         {
-            //OpenTK
-            Thread ta = new Thread(IncrementAndDisplayA);
-            Thread tb = new Thread(IncrementAndDisplayB);
-            ta.Start();
-            tb.Start();
-            Thread.Sleep(10000);
-            _running = false;
-            Console.ReadLine();
-
+            //MathNet.Numerics.LinearAlgebra.Double.
         }
 
         static void IncrementAndDisplayA() { while (_running) Console.WriteLine("a = " + a++); Console.WriteLine("A has stopped running"); }

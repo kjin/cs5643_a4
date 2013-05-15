@@ -8,12 +8,12 @@ using Common;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace Fluid
 {
     public class BasicFluid2D : GLDrawable
     {
-
         //(2 dimensions) with velocity
         double[,] u_x, u_y;
         GridCell[,] cells;
@@ -21,11 +21,15 @@ namespace Fluid
         double timestep = FluidConstants.DEFAULT_TIMESTEP;
         public Vector2 GlobalForce;
 
+        DenseMatrix V;
+        DenseMatrix VInv;
+
         //threading stuff
         volatile bool _running = false;
 
         public BasicFluid2D(int max_x, int max_y)
         {
+            if (max_x != max_y) throw new ArgumentException();
             this.max_x = max_x;
             this.max_y = max_y;
 
@@ -39,11 +43,22 @@ namespace Fluid
                     cells[i, j].Adiag = (short)(2 + (i == 0 || i + 1 == max_x ? 1 : 0) + (j == 0 || j + 1 == max_y ? 1 : 0));
                     cells[i, j].Aplusi = (short)(i + 1 < max_x ? -1 : 0);
                     cells[i, j].Aplusj = (short)(j + 1 < max_y ? -1 : 0);
+                    if (new Vector2(i - max_x / 2, j - max_y / 2).LengthSquared < max_x * max_y / 16)
+                        cells[i, j].IsFluid = true;
                 }
+
+            V = MatrixAlgebra.ToDenseMatrix(new ShallowSubsectionMatrix(new DSTMatrix(2 * max_x + 1), 1, 1, max_x, max_x));
+            VInv = MatrixAlgebra.Invert(V);
         }
 
         public void TimeStep()
         {
+            for (int i = 0; i < max_x; i++)
+                for (int j = 0; j < max_y; j++)
+                {
+                    u_x[i, j] += DX * GlobalForce.X;
+                    u_y[i, j] += DX * GlobalForce.Y;
+                }
             for (int i = 0; i < max_x; i++)
             {
                 for (int j = 0; j < max_y; j++)
@@ -55,12 +70,7 @@ namespace Fluid
                 }
             }
             Advect(timestep);
-            for (int i = 0; i < max_x; i++)
-                for (int j = 0; j < max_y; j++)
-                {
-                    u_x[i, j] += DX * GlobalForce.X;
-                    u_y[i, j] += DX * GlobalForce.Y;
-                }
+            Project(timestep);
         }
 
         //accepts x in [0,1] and y in [0,1]
@@ -167,18 +177,9 @@ namespace Fluid
             return new Vector2d(velocity_x, velocity_y);
         }
 
-        private void project()
+        private void Project(double timestep)
         {
-            for (int i = 0; i < max_x; i++)
-            {
-                for (int j = 0; j < max_y; j++)
-                {
-                    //approximate divergence
-                    cells[i,j].VelocityDivergence = (u_x[i, j] + u_x[i + 1, j]) / 2 + (u_y[i, j] + u_y[i, j + 1]) / 2;
-                    double e = cells[i, j].Adiag - (cells[i - 1, j].Aplusi * cells[i - 1, j].PreconditionedValue);
-                    //unfinished
-                }
-            }
+            
         }
 
         public void Run()
@@ -195,6 +196,19 @@ namespace Fluid
 
         public void Draw()
         {
+            GL.PushMatrix();
+            for (int i = 0; i < max_x; i++)
+            {
+                GL.PushMatrix();
+                for (int j = 0; j < max_y; j++)
+                {
+                    cells[i, j].Draw();
+                    GL.Translate(0, 1, 0);
+                }
+                GL.PopMatrix();
+                GL.Translate(1, 0, 0);
+            }
+            GL.PopMatrix();
             GL.Begin(BeginMode.Lines);
             for (int i = 0; i < max_x; i++)
                 for (int j = 0; j < max_y; j++)
@@ -207,6 +221,12 @@ namespace Fluid
                     GL.Vertex2(i, j - 0.5 + velocity.Y);
                 }
             GL.End();
+        }
+
+        //temp
+        public void SetPressure(int i, int j, double amount)
+        {
+            cells[i, j].Pressure = amount;
         }
 
         public double DX
