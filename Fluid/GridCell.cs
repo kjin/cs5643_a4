@@ -8,7 +8,7 @@ namespace Fluid
 {
     public class GridCell
     {
-        double[] data = new double[7] { -1, 0, 0, 0, 0, 0, 0 };
+        double[] data = new double[7] { -1, 0, 1, 0, 0, 0, 0 };
 
         //positive in fuel-filled regions, zero at reaction zone, negative elsewhere
         public double ImplicitSurface { get { return data[0]; } set { data[0] = value; } }

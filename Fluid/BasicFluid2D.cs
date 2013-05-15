@@ -23,9 +23,11 @@ namespace Fluid
         double timestep = FluidConstants.DEFAULT_TIMESTEP;
         public Vector2 GlobalForce;
 
+        DenseMatrix V;
+        DenseMatrix VInv;
+        DenseMatrix D;
+
         SparseMatrix A;
-        MathNet.Numerics.LinearAlgebra.Double.Solvers.Preconditioners.IPreConditioner solver;
-        Vector p, d;
 
         //threading stuff
         volatile bool _running = false;
@@ -59,12 +61,11 @@ namespace Fluid
                     if (new Vector2(i - max_x / 2, j - max_y / 2).LengthSquared < max_x * max_y / 16)
                         cells[i, j].ImplicitSurface = 5;
                 }
-            using (TextWriter tw = new StreamWriter("output.txt")) tw.WriteLine(A.ToMatrixString(900, 900));
-            solver = new
-                MathNet.Numerics.LinearAlgebra.Double.Solvers.Preconditioners.Ilutp();
-            solver.Initialize(A);
-            p = new DenseVector(max_x * max_y);
-            d = new DenseVector(max_x * max_y);
+            //using (TextWriter tw = new StreamWriter("output.txt")) tw.WriteLine(A.ToMatrixString(900, 900));
+
+            V = MatrixAlgebra.ToDenseMatrix(new ShallowSubsectionMatrix(new DSTMatrix(2 * (max_x + 1)), 1, 1, max_x, max_x));
+            VInv = MatrixAlgebra.Scale(V, 2.0 / (max_x + 1.0));
+            D = MatrixAlgebra.ToDenseMatrix(new DiagonalDelegateMatrix(delegate(int ij) { return -4.0 * Util.Square(Math.Sin((ij + 1) * Math.PI / 2.0 / (max_x + 1.0))); }, max_x));
         }
 
         /// <summary>
@@ -277,22 +278,22 @@ namespace Fluid
 
         private void Project(double timestep)
         {
-            d = new DenseVector(max_x * max_y);
-            for (int i = 0; i < max_x; i++)
-                for (int j = 0; j < max_y; j++)
-                    d[i * max_x + j] = u_x[i + 1, j] - u_x[i, j] + u_y[i, j + 1] - u_y[i, j];
-            solver.Approximate(d, p);
-            for (int i = 0; i < max_x; i++)
-                for (int j = 0; j < max_y; j++)
-                    cells[i, j].Pressure = p[i * max_x + j];
+            DenseDelegateMatrix B = new DenseDelegateMatrix(delegate(int i, int j) { return (u_x[i + 1, j] - u_x[i, j]) + (u_y[i, j + 1] - u_y[i, j]); }, max_x);
+            DenseMatrix BHat = MatrixAlgebra.Multiply(VInv, MatrixAlgebra.Multiply(B, V));
+            DenseMatrix UHat = new DenseMatrix(B.Rows, B.Columns);
+            for (int i = 0; i < UHat.Rows; i++)
+                for (int j = 0; j < UHat.Columns; j++)
+                    UHat[i, j] = BHat[i, j] / (D[i, i] + D[j, j]);
+            DenseMatrix UInt = MatrixAlgebra.Multiply(V, MatrixAlgebra.Multiply(UHat, VInv));
+            GridCellMatrix U = new GridCellMatrix(cells, 3);
             error = 0;
-            for (int i = 0; i < max_x - 1; i++)
-                for (int j = 0; j < max_y - 1; j++)
+            for (int i = 0; i < UInt.Rows - 1; i++)
+                for (int j = 0; j < UInt.Columns - 1; j++)
                 {
-                    if (cells[i, j].Density == 0) continue;
-                    u_x[i + 1, j] -= timestep / cells[i, j].Density * cells[i + 1, j].Pressure - cells[i, j].Pressure;
-                    u_y[i, j + 1] -= timestep / cells[i, j].Density * cells[i, j + 1].Pressure - cells[i, j].Pressure;
-                    error += Util.Square(u_x[i + 1, j] - u_x[i, j] + u_y[i, j + 1] - u_y[i, j]);
+                    U[i, j] = UInt[i, j];
+                    u_x[i + 1, j] -= timestep / cells[i,j].Density * (UInt[i + 1, j] - UInt[i, j]);
+                    u_y[i, j + 1] -= timestep / cells[i,j].Density * (UInt[i, j + 1] - UInt[i, j]);
+                    error += B[i, j];
                 }
         }
 
