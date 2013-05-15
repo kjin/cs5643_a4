@@ -14,5 +14,6 @@ namespace Fluid
         public static double GRAVITY_MAGNITUDE = 9.81;
 
         public static double BUOYANCY = 0.5;
+        public static double VORTICITY = 0.1;
     }
 }

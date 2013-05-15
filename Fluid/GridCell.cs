@@ -15,11 +15,12 @@ namespace Fluid
         public double Temperature { get { return data[1]; } set { data[1] = value; } }
         public double Density { get { return data[2]; } set { data[2] = value; } }
         public double Pressure { get { return data[3]; } set { data[3] = value; } }
+        public double Vorticity { get { return data[4]; } set { data[4] = value; } }
 
-        public double VelocityDivergence { get { return data[4]; } set { data[4] = value; } }
+        /*public double VelocityDivergence { get { return data[4]; } set { data[4] = value; } }
         public double PreconditionedValue { get { return data[5]; } set { data[5] = value; } }
         public double Residual { get { return data[6]; } set { data[6] = value; } }
-        public double ZValue { get { return data[7]; } set { data[7] = value; } }
+        public double ZValue { get { return data[7]; } set { data[7] = value; } }*/
 
         public bool IsFluid;
 
