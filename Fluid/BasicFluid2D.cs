@@ -71,7 +71,7 @@ namespace Fluid
                     u_y[i, j] += timestep * GlobalForce.Y;
                 }
 
-            ApplyBouyancy(timestep);
+            ApplyBuoyancy(timestep);
          
             Advect(timestep);
             Project(timestep);
@@ -195,7 +195,18 @@ namespace Fluid
 
         private void Project(double timestep)
         {
-            
+            DenseDelegateMatrix B = new DenseDelegateMatrix(delegate(int i, int j) { return (u_x[i + 1, j] + u_x[i, j]) / 2 + (u_y[i, j + 1] + u_y[i, j] / 2); }, max_x);
+            DiagonalDelegateMatrix D = new DiagonalDelegateMatrix(delegate(int ij) { return -4 * Util.Square(Math.Sin(ij * Math.PI / 2 / (max_x + 1))); }, max_x);
+            DenseMatrix BHat = MatrixAlgebra.Multiply(VInv, MatrixAlgebra.Multiply(B, V));
+            DenseMatrix UHat = new DenseMatrix(B.Rows, B.Columns);
+            for (int i = 0; i < UHat.Rows; i++)
+                for (int j = 0; j < UHat.Columns; j++)
+                    UHat[i, j] = FluidConstants.WATER_PRESSURE / timestep * BHat[i, j] / (D[i, i] + D[j, j]);
+            DenseMatrix UInt = MatrixAlgebra.Multiply(V, MatrixAlgebra.Multiply(UHat, VInv));
+            GridCellMatrix U = new GridCellMatrix(cells, 3);
+            for (int i = 0; i < U.Rows; i++)
+                for (int j = 0; j < U.Columns; j++)
+                    U[i, j] = UInt[i, j];
         }
 
         public void Run()
