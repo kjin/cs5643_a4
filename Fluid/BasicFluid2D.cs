@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 using Common;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using MathNet.Numerics.LinearAlgebra.Double;
-using MathNet.Numerics.LinearAlgebra.Double.Solvers.Preconditioners;
+using MathNet.Numerics.LinearAlgebra.Double.Solvers;
 
 namespace Fluid
 {
@@ -23,7 +24,7 @@ namespace Fluid
         public Vector2 GlobalForce;
 
         SparseMatrix A;
-        IncompleteLU solver;
+        MathNet.Numerics.LinearAlgebra.Double.Solvers.Preconditioners.IPreConditioner solver;
         Vector p, d;
 
         //threading stuff
@@ -58,7 +59,9 @@ namespace Fluid
                     if (new Vector2(i - max_x / 2, j - max_y / 2).LengthSquared < max_x * max_y / 16)
                         cells[i, j].ImplicitSurface = 5;
                 }
-            solver = new IncompleteLU();
+            using (TextWriter tw = new StreamWriter("output.txt")) tw.WriteLine(A.ToMatrixString(900, 900));
+            solver = new
+                MathNet.Numerics.LinearAlgebra.Double.Solvers.Preconditioners.Ilutp();
             solver.Initialize(A);
             p = new DenseVector(max_x * max_y);
             d = new DenseVector(max_x * max_y);
@@ -88,8 +91,8 @@ namespace Fluid
                     u_y[i, j] = vel.Y;
                 }
             }
-            Project(timestep);
             Advect(timestep);
+            Project(timestep);
             //error = 0;
             for (int i = 0; i < max_x; i++)
                 for (int j = 0; j < max_y; j++)
