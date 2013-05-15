@@ -12,5 +12,7 @@ namespace Fluid
 
         public static double WATER_PRESSURE = 1000;
         public static double GRAVITY_MAGNITUDE = 9.81;
+
+        public static double BUOYANCY = 0.5;
     }
 }

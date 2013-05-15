@@ -53,12 +53,7 @@ namespace Fluid
 
         public void TimeStep()
         {
-            for (int i = 0; i < max_x; i++)
-                for (int j = 0; j < max_y; j++)
-                {
-                    u_x[i, j] += DX * GlobalForce.X;
-                    u_y[i, j] += DX * GlobalForce.Y;
-                }
+            
             for (int i = 0; i < max_x; i++)
             {
                 for (int j = 0; j < max_y; j++)
@@ -69,6 +64,15 @@ namespace Fluid
 
                 }
             }
+            for (int i = 0; i < max_x; i++)
+                for (int j = 0; j < max_y; j++)
+                {
+                    u_x[i, j] += timestep * GlobalForce.X;
+                    u_y[i, j] += timestep * GlobalForce.Y;
+                }
+
+            ApplyBouyancy(timestep);
+         
             Advect(timestep);
             Project(timestep);
         }
@@ -140,6 +144,18 @@ namespace Fluid
             }
         }
 
+        private void ApplyBuoyancy(double dt)
+        {
+            for (int i = 0; i < max_x; i++)
+            {
+                for (int j = 1; j < max_y; j++)
+                {
+                    double f_buoy = ((cells[i, j].Temperature + cells[i, j - 1].Temperature) / 2) * (FluidConstants.BUOYANCY);
+                    u_y[i, j] += f_buoy * dt;
+                }
+            }
+
+        }
 
         private Vector2d GetVelocity(double x, double y)
         {
